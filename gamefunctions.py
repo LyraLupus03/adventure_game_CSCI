@@ -2,11 +2,32 @@
 #Haley Burley
 #2/16/25
 
+"""
+gamefunctions.py
+
+This module provides functions for an adventure-style game, including printing a welcome message,
+displaying a shop menu, processing item purchases, and generating random monsters.
+
+Functions:
+- print_welcome(name): Prints a welcome message.
+- print_shop_menu(item1Name, item1Price, item2Name, item2Price): Displays a formatted shop menu.
+- purchase_item(itemPrice, startingMoney, quantityToPurchase): Calculates how many items can be bought.
+- new_random_monster(): Generates a random monster with attributes.
+"""
+
 import random
 
-def purchase_item(itemPrice, startingMoney, quantityToPurchase=1):
+def purchase_item(itemPrice: float, startingMoney: float, quantityToPurchase: int = 1) -> tuple:
     """
     Calculates how many items can be purchased and the remaining money.
+
+    Args:
+        itemPrice (float): Price of a single item.
+        startingMoney (float): The total amount of money available.
+        quantityToPurchase (int, optional): Number of items player wants to buy. Defaults to 1.
+
+    Returns:
+        tuple: (Number of items purchased, Remaining money)
     """
     total_cost = itemPrice * quantityToPurchase
     if total_cost <= startingMoney:
@@ -15,9 +36,12 @@ def purchase_item(itemPrice, startingMoney, quantityToPurchase=1):
         max_purchasable = int(startingMoney // itemPrice)
         return max_purchasable, startingMoney - (max_purchasable * itemPrice)
 
-def new_random_monster():
+def new_random_monster() -> dict:
     """
-    Generates a random monster with name, description, health, power, and money.
+    Generates a random monster with a name, description, health, power, and money.
+
+    Returns:
+        dict: A dictionary containing monster attributes.
     """
     monsters = [
         {
@@ -45,15 +69,34 @@ def new_random_monster():
 
     return random.choice(monsters)
 
-def print_welcome(name):
+def print_welcome(name: str) -> None:
     """
-    Prints a welcome message that is centered within 20 characters.
+    Prints a welcome message centered within 20 characters.
+
+    Args:
+        name (str): The name of the player.
+
+    Returns:
+        None
+
+    Example:
+        >>> print_welcome("Alice")
+        Hello, Alice!   
     """
     print(f"{'Hello, ' + name + '!':^20}")
 
-def print_shop_menu(item1Name, item1Price, item2Name, item2Price):
+def print_shop_menu(item1Name: str, item1Price: float, item2Name: str, item2Price: float) -> None:
     """
-    Prints a shop sign with menu items and prices, and a border around it.
+    Prints a shop sign with menu items and prices.
+
+    Args:
+        item1Name (str): Name of the first item.
+        item1Price (float): Price of the first item.
+        item2Name (str): Name of the second item.
+        item2Price (float): Price of the second item.
+
+    Returns:
+        None
     """
     border = "/----------------\\"
     print(border)
@@ -96,6 +139,22 @@ if __name__ == "__main__":
     print("\nTesting print_shop_menu function:")
     print_shop_menu("Apple", 2.75, "Orange", 1.50)
     print_shop_menu("Egg", .23, "Milk", 12.34)
+
+def test_functions():
+    """
+    Runs test cases for all functions.
+    """
+    print_welcome("Haley")
+    print_shop_menu("Apple", 2.75, "Orange", 1.50)
+    
+    num_purchased, money_left = purchase_item(1.23, 10, 3)
+    print(f"Purchased: {num_purchased}, Money Left: {money_left}")
+    
+    monster = new_random_monster()
+    print(f"Encountered monster: {monster['name']}, {monster['description']}")
+
+if __name__ == "__main__":
+    test_functions()
 
 # This program implements four functions for an adventure-style game:
 # 1. purchase_item(): Calculates how many items can be purchased with a given amount of money.
