@@ -98,11 +98,20 @@ def print_shop_menu(item1Name: str, item1Price: float, item2Name: str, item2Pric
     Returns:
         None
     """
-    border = "/----------------\\"
+    content1 = f"{item1Name:<12} ${item1Price:.2f}"
+    content2 = f"{item2Name:<12} ${item2Price:.2f}"
+    content_width = max(len(content1), len(content2))
+
+    line1 = f"| {content1:<{content_width}} |"
+    line2 = f"| {content2:<{content_width}} |"
+
+    border = f"/{'-' * (len(line1) - 2)}\\"
+    bottom = f"\\{'-' * (len(line1) - 2)}/"
+
     print(border)
-    print(f"| {item1Name:<12} ${item1Price:>6.2f} |")
-    print(f"| {item2Name:<12} ${item2Price:>6.2f} |")
-    print("\\----------------/")
+    print(line1)
+    print(line2)
+    print(bottom)
 
 if __name__ == "__main__":
     print("Testing purchase_item function:")
