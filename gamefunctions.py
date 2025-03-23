@@ -125,11 +125,11 @@ if __name__ == "__main__":
     
     for price, money, qty in test_cases:
         num_purchased, leftover_money = purchase_item(price, money, qty)
-        print(f"Purchased: {num_purchased}, Money Left: {leftover_money}")
+        print(f"Purchased: {num_purchased}, Money Left: ${leftover_money:.2f}")
 
     print("\nTesting default quantity parameter:")
     num_purchased, leftover_money = purchase_item(2.50, 10)
-    print(f"Purchased: {num_purchased}, Money Left: {leftover_money}")
+    print(f"Purchased: {num_purchased}, Money Left: ${leftover_money:.2f}")
 
     print("\nTesting new_random_monster function:")
     for _ in range(3):
@@ -138,7 +138,7 @@ if __name__ == "__main__":
         print(f"Description: {monster['description']}")
         print(f"Health: {monster['health']}")
         print(f"Power: {monster['power']}")
-        print(f"Money: {monster['money']}\n")
+        print(f"Money: ${monster['money']:.2f}\n")
 
     print("\nTesting print_welcome function:")
     print_welcome("Haley")
@@ -157,10 +157,10 @@ def test_functions():
     print_shop_menu("Apple", 2.75, "Orange", 1.50)
     
     num_purchased, money_left = purchase_item(1.23, 10, 3)
-    print(f"Purchased: {num_purchased}, Money Left: {money_left}")
+    print(f"Purchased: {num_purchased}, Money Left: ${leftover_money:.2f}")
     
     monster = new_random_monster()
-    print(f"Encountered monster: {monster['name']}, {monster['description']}")
+    print(f"Encountered monster: {monster['name']}, {monster['description']}, ${monster['money']:.2f}")
 
 if __name__ == "__main__":
     test_functions()
