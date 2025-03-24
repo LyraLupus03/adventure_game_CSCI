@@ -32,13 +32,13 @@ def main():
             choice = input("Enter choice (1-3): ")
 
         if choice == "1":
-            player_hp, player_gold = handle_monster_fight(player_hp, player_gold)
+            player_hp, player_gold = gamefunctions.handle_monster_fight(player_hp, player_gold)
         elif choice == "2":
-            player_hp, player_gold = sleep(player_hp, player_gold, max_hp)
+            player_hp, player_gold = gamefunctions.sleep(player_hp, player_gold, max_hp)
         elif choice == "3":
             print("Thanks for playing!")
             break
-        
+
     # TEST Display shop menu
     #print("\nWelcome to the shop!")
     #gamefunctions.print_shop_menu("Sword", 10.0, "Shield", 15.0)
