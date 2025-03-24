@@ -165,6 +165,82 @@ def test_functions():
 if __name__ == "__main__":
     test_functions()
 
+def handle_monster_fight(player_hp, player_gold):
+    """
+    Handles combat between the player and a randomly generated monster.
+
+    Args:
+        player_hp (int): The current health of the player.
+        player_gold (float): The current amount of gold the player has.
+
+    Returns:
+        tuple: Updated player_hp and player_gold after the fight.
+    """
+    monster = new_random_monster()
+    monster_hp = monster['health']
+    monster_power = monster['power']
+    monster_money = monster['money']
+
+    print(f"\nYou leave town and encounter a {monster['name']}!")
+    print(monster["description"])
+
+    while monster_hp > 0 and player_hp > 0:
+        print(f"\nYour HP: {player_hp} | {monster['name']} HP: {monster_hp}")
+        print("1) Attack")
+        print("2) Run Away")
+        choice = input("Enter choice (1-2): ")
+        while choice not in ["1", "2"]:
+            print("Invalid input. Please choose 1 or 2.")
+            choice = input("Enter choice (1-2): ")
+
+        if choice == "2":
+            print("You ran away and returned to town.")
+            return player_hp, player_gold
+
+        # Combat round
+        damage_to_monster = random.randint(5, 15)
+        monster_hp -= damage_to_monster
+        print(f"You hit the {monster['name']} for {damage_to_monster} damage!")
+
+        if monster_hp <= 0:
+            print(f"You defeated the {monster['name']} and earned {monster_money:.2f} gold!")
+            player_gold += monster_money
+            break
+
+        damage_to_player = monster_power
+        player_hp -= damage_to_player
+        print(f"The {monster['name']} hit you for {damage_to_player} damage!")
+
+        if player_hp <= 0:
+            print("You have been defeated by the monster!")
+            break
+
+    return player_hp, player_gold
+
+def sleep(player_hp, player_gold, max_hp):
+    """
+    Restores the player's HP by a set amount in exchange for gold.
+
+    Args:
+        player_hp (int): The player's current HP.
+        player_gold (float): The player's current gold.
+        max_hp (int): The player's maximum HP.
+
+    Returns:
+        tuple: Updated player_hp and player_gold after sleeping.
+    """
+    cost = 5
+    heal_amount = 10
+
+    if player_gold < cost:
+        print("Not enough gold to sleep at the Inn.")
+        return player_hp, player_gold
+
+    player_gold -= cost
+    player_hp = min(player_hp + heal_amount, max_hp)
+    print(f"You slept at an Inn and recovered {heal_amount} HP. Current HP: {player_hp}, Gold left: {player_gold}")
+    return player_hp, player_gold
+
 # This program implements four functions for an adventure-style game:
 # 1. purchase_item(): Calculates how many items can be purchased with a given amount of money.
 # 2. new_random_monster(): Generates a random monster with different attributes.
