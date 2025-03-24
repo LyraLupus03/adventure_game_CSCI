@@ -49,21 +49,21 @@ def new_random_monster() -> dict:
             "description": "You find a sparkling little creature buzzing around. When it notices you, it rushes at you quickly with a sharp dagger.",
             "health": random.randint(10, 20),
             "power": random.randint(5, 10),
-            "money": round(random.uniform(1, 50), 2),
+            "money": round(random.uniform(1, 15), 2),
         },
         {
             "name": "Frog",
             "description": "You discover a frog licking its lips as it looks you over.",
             "health": random.randint(5, 15),
             "power": random.randint(2, 7),
-            "money": round(random.uniform(10, 150), 2),
+            "money": round(random.uniform(1, 10), 2),
         },
         {
             "name": "Vampire",
             "description": "A shadowy figure jumps out at you from behind a tree.",
             "health": random.randint(30, 50),
             "power": random.randint(10, 20),
-            "money": round(random.uniform(5, 100), 2),
+            "money": round(random.uniform(5, 30), 2),
         }
     ]
 
