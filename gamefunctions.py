@@ -238,7 +238,7 @@ def sleep(player_hp, player_gold, max_hp):
 
     player_gold -= cost
     player_hp = min(player_hp + heal_amount, max_hp)
-    print(f"You slept at an Inn and recovered {heal_amount} HP. Current HP: {player_hp}, Gold left: {player_gold}")
+    print(f"You slept at an Inn and recovered {heal_amount} HP. Current HP: {player_hp}, Gold left: {player_gold:.2f}")
     return player_hp, player_gold
 
 # This program implements four functions for an adventure-style game:
