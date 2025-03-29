@@ -165,24 +165,21 @@ def test_functions():
 if __name__ == "__main__":
     test_functions()
 
-def handle_monster_fight(player_hp, player_gold):
+def combat_loop(player_hp, monster, player_gold):
     """
-    Handles combat between the player and a randomly generated monster.
+    Handles the combat loop between the player and the monster.
 
     Args:
-        player_hp (int): The current health of the player.
-        player_gold (float): The current amount of gold the player has.
+        player_hp (int): Player's health.
+        monster (dict): The monster dictionary.
+        player_gold (float): Player's gold.
 
     Returns:
-        tuple: Updated player_hp and player_gold after the fight.
+        tuple: Updated player_hp and player_gold.
     """
-    monster = new_random_monster()
     monster_hp = monster['health']
     monster_power = monster['power']
     monster_money = monster['money']
-
-    print(f"\nYou leave town and encounter a {monster['name']}!")
-    print(monster["description"])
 
     while monster_hp > 0 and player_hp > 0:
         print(f"\nYour HP: {player_hp} | {monster['name']} HP: {monster_hp}")
@@ -197,7 +194,6 @@ def handle_monster_fight(player_hp, player_gold):
             print("You ran away and returned to town.")
             return player_hp, player_gold
 
-        # Combat round
         damage_to_monster = random.randint(5, 15)
         monster_hp -= damage_to_monster
         print(f"You hit the {monster['name']} for {damage_to_monster} damage!")
@@ -216,6 +212,24 @@ def handle_monster_fight(player_hp, player_gold):
             break
 
     return player_hp, player_gold
+
+def handle_monster_fight(player_hp, player_gold):
+    """
+    Handles monster encounter by generating a monster and calling the combat loop.
+
+    Args:
+        player_hp (int): The current health of the player.
+        player_gold (float): The current amount of gold the player has.
+
+    Returns:
+        tuple: Updated player_hp and player_gold after the fight.
+    """
+    monster = new_random_monster()
+
+    print(f"\nYou leave town and encounter a {monster['name']}!")
+    print(monster["description"])
+
+    return combat_loop(player_hp, monster, player_gold)
 
 def sleep(player_hp, player_gold, max_hp):
     """
