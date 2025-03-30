@@ -36,6 +36,55 @@ def purchase_item(itemPrice: float, startingMoney: float, quantityToPurchase: in
         max_purchasable = int(startingMoney // itemPrice)
         return max_purchasable, startingMoney - (max_purchasable * itemPrice)
 
+def visit_shop(player_gold, inventory):
+    items_for_sale = [
+        {"name": "sword", "type": "weapon", "maxDurability": 10, "currentDurability": 10, "price": 10},
+        {"name": "holy hand grenade", "type": "consumable", "note": "defeats monster", "price": 12}
+    ]
+
+    print("\nWelcome to the shop!")
+    for i, item in enumerate(items_for_sale, 1):
+        print(f"{i}) {item['name'].title()} - {item['price']} gold")
+
+    print(f"{len(items_for_sale)+1}) Leave shop")
+    choice = input("Enter your choice: ")
+
+    if not choice.isdigit() or int(choice) not in range(1, len(items_for_sale)+2):
+        print("Invalid choice.")
+        return player_gold, inventory
+
+    if int(choice) == len(items_for_sale) + 1:
+        return player_gold, inventory
+
+    selected_item = items_for_sale[int(choice)-1]
+    if player_gold >= selected_item["price"]:
+        inventory.append(selected_item.copy())
+        player_gold -= selected_item["price"]
+        print(f"You bought a {selected_item['name']}!")
+    else:
+        print("Not enough gold!")
+
+    return player_gold, inventory
+
+def equip_item(inventory, item_type):
+    relevant_items = [item for item in inventory if item["type"] == item_type]
+    if not relevant_items:
+        print(f"No {item_type}s available to equip.")
+        return None
+
+    print(f"Choose a {item_type} to equip:")
+    for i, item in enumerate(relevant_items, 1):
+        print(f"{i}) {item['name'].title()}")
+
+    choice = input("Enter number: ")
+    if choice.isdigit() and 1 <= int(choice) <= len(relevant_items):
+        selected = relevant_items[int(choice)-1]
+        print(f"You have equipped {selected['name']}!")
+        return selected
+    else:
+        print("Invalid choice.")
+        return None
+
 def new_random_monster() -> dict:
     """
     Generates a random monster with a name, description, health, power, and money.
@@ -165,7 +214,7 @@ def test_functions():
 if __name__ == "__main__":
     test_functions()
 
-def combat_loop(player_hp, monster, player_gold):
+def combat_loop(player_hp, monster, player_gold, weapon, inventory):
     """
     Handles the combat loop between the player and the monster.
 
@@ -186,50 +235,55 @@ def combat_loop(player_hp, monster, player_gold):
         print("1) Attack")
         print("2) Run Away")
         choice = input("Enter choice (1-2): ")
-        while choice not in ["1", "2"]:
-            print("Invalid input. Please choose 1 or 2.")
-            choice = input("Enter choice (1-2): ")
 
         if choice == "2":
             print("You ran away and returned to town.")
-            return player_hp, player_gold
+            return player_hp, player_gold, weapon
 
-        damage_to_monster = random.randint(5, 15)
-        monster_hp -= damage_to_monster
-        print(f"You hit the {monster['name']} for {damage_to_monster} damage!")
+        if weapon:
+            damage = random.randint(10, 20)
+            weapon["currentDurability"] -= 1
+            if weapon["currentDurability"] <= 0:
+                print(f"Your {weapon['name']} broke!")
+                inventory.remove(weapon)
+                weapon = None
+        else:
+            damage = random.randint(5, 10)
+
+        monster_hp -= damage
+        print(f"You hit the {monster['name']} for {damage} damage!")
 
         if monster_hp <= 0:
             print(f"You defeated the {monster['name']} and earned {monster_money:.2f} gold!")
             player_gold += monster_money
             break
 
-        damage_to_player = monster_power
-        player_hp -= damage_to_player
-        print(f"The {monster['name']} hit you for {damage_to_player} damage!")
+        player_hp -= monster_power
+        print(f"The {monster['name']} hit you for {monster_power} damage!")
 
         if player_hp <= 0:
             print("You have been defeated by the monster!")
             break
 
-    return player_hp, player_gold
+    return player_hp, player_gold, weapon
 
-def handle_monster_fight(player_hp, player_gold):
-    """
-    Handles monster encounter by generating a monster and calling the combat loop.
-
-    Args:
-        player_hp (int): The current health of the player.
-        player_gold (float): The current amount of gold the player has.
-
-    Returns:
-        tuple: Updated player_hp and player_gold after the fight.
-    """
+def handle_monster_fight(player_hp, player_gold, inventory, equipped_weapon):
     monster = new_random_monster()
-
     print(f"\nYou leave town and encounter a {monster['name']}!")
     print(monster["description"])
 
-    return combat_loop(player_hp, monster, player_gold)
+    # Check for consumable item
+    consumables = [item for item in inventory if item["type"] == "consumable"]
+    if consumables:
+        print("You can use a consumable item to avoid the fight.")
+        use_item = input(f"Use {consumables[0]['name']}? (y/n): ")
+        if use_item.lower() == "y":
+            inventory.remove(consumables[0])
+            print(f"You used {consumables[0]['name']} and defeated the monster without damage!")
+            player_gold += monster["money"]
+            return player_hp, player_gold, equipped_weapon
+
+    return combat_loop(player_hp, monster, player_gold, equipped_weapon, inventory)
 
 def sleep(player_hp, player_gold, max_hp):
     """

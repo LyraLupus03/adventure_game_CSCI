@@ -17,6 +17,8 @@ def main():
     player_hp = 30
     player_gold = 10
     max_hp = 30
+    player_inventory = []
+    equipped_weapon = None
 
     while True:
         print("\nYou are in town.")
@@ -24,18 +26,25 @@ def main():
         print("What would you like to do?")
         print("1) Leave town (Fight Monster)")
         print("2) Sleep (Restore HP for 5 Gold)")
-        print("3) Quit")
+        print("3) Visit Shop")
+        print("4) Equip Item")
+        print("5) Quit")
 
-        choice = input("Enter choice (1-3): ")
-        while choice not in ["1", "2", "3"]:
-            print("Invalid input. Please choose 1, 2, or 3.")
-            choice = input("Enter choice (1-3): ")
+        choice = input("Enter choice (1-5): ")
+        while choice not in ["1", "2", "3", "4", "5"]:
+            print("Invalid input. Please choose 1, 2, 3, 4, or 5.")
+            choice = input("Enter choice (1-5): ")
 
         if choice == "1":
-            player_hp, player_gold = gamefunctions.handle_monster_fight(player_hp, player_gold)
+            player_hp, player_gold, equipped_weapon = gamefunctions.handle_monster_fight(
+            player_hp, player_gold, player_inventory, equipped_weapon)
         elif choice == "2":
             player_hp, player_gold = gamefunctions.sleep(player_hp, player_gold, max_hp)
         elif choice == "3":
+            player_gold, player_inventory = gamefunctions.visit_shop(player_gold, player_inventory)
+        elif choice == "4":
+            equipped_weapon = gamefunctions.equip_item(player_inventory, "weapon")
+        elif choice == "5":
             print("Thanks for playing!")
             break
 
