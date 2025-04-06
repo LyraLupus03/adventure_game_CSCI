@@ -1,7 +1,12 @@
+#game.py
+#Haley Burley
+#4/6/2025
+
 """
 game.py
 
-This script imports functions from gamefunctions.py and calls those functions.
+This script imports functions from gamefunctions.py and calls those functions for an 
+adventure-style game where you can buy items and fight monsters.
 """
 import gamefunctions
 
@@ -42,8 +47,7 @@ def main():
             print("Thanks for playing!")
         elif choice == "6":
             gamefunctions.save_and_quit("savefile.json", player_name, player_hp,
-                                        player_gold, max_hp, player_inventory,
-                                        equipped_weapon, equipped_armor)
+                player_gold, max_hp, player_inventory, equipped_weapon, equipped_armor)
             break
 
 if __name__ == "__main__":

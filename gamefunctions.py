@@ -5,14 +5,51 @@
 """
 gamefunctions.py
 
-This module provides functions for an adventure-style game, including printing a welcome message,
-displaying a shop menu, processing item purchases, and generating random monsters.
+This script provides functions for an adventure-style game, including sleeping to restore health,
+displaying a shop menu, processing item purchases, and generating random monsters to fight.
 
 Functions:
-- print_welcome(name): Prints a welcome message.
-- print_shop_menu(item1Name, item1Price, item2Name, item2Price): Displays a formatted shop menu.
-- purchase_item(itemPrice, startingMoney, quantityToPurchase): Calculates how many items can be bought.
-- new_random_monster(): Generates a random monster with attributes.
+- purchase_item(itemPrice, startingMoney, quantityToPurchase):
+    Calculates how many items can be bought with available money.
+
+- visit_shop(player_gold, inventory):
+    Displays a shop menu and allows the player to purchase items.
+
+- equip_item(inventory, item_type):
+    Lets the player choose an item of a specified type (weapon/armor) to equip.
+
+- handle_equipment(inventory, equipped_weapon, equipped_armor):
+    Prompts the user to equip either a weapon or armor and updates equipped gear.
+
+- new_random_monster():
+    Returns a randomly generated monster with name, description, stats, and reward.
+
+- print_welcome(name):
+    Prints a welcome message, centered within a fixed width.
+
+- print_shop_menu(item1Name, item1Price, item2Name, item2Price):
+    Displays a decorative ASCII menu for shop items.
+
+- combat_loop(player_hp, monster, player_gold, weapon, inventory):
+    Runs the combat sequence between the player and the monster, updating health and inventory.
+
+- handle_monster_fight(player_hp, player_gold, inventory, equipped_weapon):
+    Sets up a monster encounter and lets the player fight or use a consumable.
+
+- sleep(player_hp, player_gold, max_hp):
+    Restores player HP by a fixed amount in exchange for gold.
+
+- save_game(filename, game_data):
+    Saves the player’s game state to a JSON file.
+
+- load_game(filename):
+    Loads and returns game data from a JSON file.
+
+- start_game(filename="savefile.json"):
+    Prompts the player to start a new game or load a previous save, returning full game state.
+
+- save_and_quit(filename, player_name, player_hp, player_gold, max_hp, inventory, weapon, armor):
+    Saves all game data to a file and exits the game.
 """
 
 import random
@@ -44,10 +81,28 @@ def visit_shop(player_gold, inventory):
     ]
 
     print("\nWelcome to the shop!")
-    for i, item in enumerate(items_for_sale, 1):
-        print(f"{i}) {item['name'].title()} - {item['price']} gold")
 
+    # Build formatted lines for each item
+    item_lines = []
+    for i, item in enumerate(items_for_sale, 1):
+        name = f"{i}) {item['name'].title()}"
+        price = f"${item['price']:.2f}"
+        item_lines.append(f"| {name:<30}{price:>7} |")
+
+    # Determine width based on longest line
+    content_width = max(len(line) for line in item_lines)
+    border = f"/{'-' * (content_width - 2)}\\"
+    bottom = f"\\{'-' * (content_width - 2)}/"
+
+    # Print box
+    print(border)
+    for line in item_lines:
+        print(line)
+    print(bottom)
+
+    # Add option to leave shop
     print(f"{len(items_for_sale)+1}) Leave shop")
+
     choice = input("Enter your choice: ")
 
     if not choice.isdigit() or int(choice) not in range(1, len(items_for_sale)+2):
@@ -160,7 +215,9 @@ def print_welcome(name: str) -> None:
         >>> print_welcome("Alice")
         Hello, Alice!   
     """
-    print(f"{'Hello, ' + name + '!':^20}")
+    print(f"\n{'=' * 40}")
+    print(f"{'Hello, ' + name + '!':^40}")
+    print(f"{'=' * 40}\n")
 
 def print_shop_menu(item1Name: str, item1Price: float, item2Name: str, item2Price: float) -> None:
     """
@@ -356,6 +413,7 @@ def start_game(filename="savefile.json"):
     if start_choice == "2" and os.path.exists(filename):
         data = load_game(filename)
         if data:
+            print_welcome(data.get("player_name", "Unknown"))
             return (
                 data.get("player_name", "Unknown"),
                 data.get("player_hp", 30),
@@ -370,6 +428,7 @@ def start_game(filename="savefile.json"):
 
     # Default new game state
     player_name = input("Enter your name: ")
+    print_welcome(player_name)
     return (
         player_name,
         30,  # player_hp
