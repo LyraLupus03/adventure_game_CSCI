@@ -38,7 +38,8 @@ def purchase_item(itemPrice: float, startingMoney: float, quantityToPurchase: in
 
 def visit_shop(player_gold, inventory):
     items_for_sale = [
-        {"name": "sword", "type": "weapon", "maxDurability": 10, "currentDurability": 10, "price": 10},
+        {"name": "sword", "type": "weapon", "maxDurability": 5, "currentDurability": 5, "price": 10},
+        {"name": "shield", "type": "armor", "maxDurability": 5, "currentDurability": 5, "price": 8},
         {"name": "holy hand grenade", "type": "consumable", "note": "defeats monster", "price": 12}
     ]
 
@@ -84,6 +85,33 @@ def equip_item(inventory, item_type):
     else:
         print("Invalid choice.")
         return None
+
+def handle_equipment(inventory, equipped_weapon, equipped_armor):
+    """
+    Prompts the player to choose to equip a weapon or armor.
+
+    Args:
+        inventory (list): The player's inventory.
+        equipped_weapon (dict or None): Currently equipped weapon.
+        equipped_armor (dict or None): Currently equipped armor.
+
+    Returns:
+        tuple: (equipped_weapon, equipped_armor)
+    """
+    print("What would you like to equip?")
+    print("1) Weapon")
+    print("2) Armor")
+    equip_choice = input("Enter choice (1-2): ")
+    while equip_choice not in ["1", "2"]:
+        print("Invalid input.")
+        equip_choice = input("Enter choice (1-2): ")
+
+    if equip_choice == "1":
+        equipped_weapon = equip_item(inventory, "weapon")
+    elif equip_choice == "2":
+        equipped_armor = equip_item(inventory, "armor")
+
+    return equipped_weapon, equipped_armor
 
 def new_random_monster() -> dict:
     """
@@ -162,58 +190,6 @@ def print_shop_menu(item1Name: str, item1Price: float, item2Name: str, item2Pric
     print(line2)
     print(bottom)
 
-if __name__ == "__main__":
-    print("Testing purchase_item function:")
-    test_cases = [
-        (1.23, 10, 3),
-        (1.23, 2.01, 3),
-        (3.41, 21.12, 1),
-        (31.41, 21.12, 1),
-        (5.00, 50.00, 12)
-    ]
-    
-    for price, money, qty in test_cases:
-        num_purchased, leftover_money = purchase_item(price, money, qty)
-        print(f"Purchased: {num_purchased}, Money Left: ${leftover_money:.2f}")
-
-    print("\nTesting default quantity parameter:")
-    num_purchased, leftover_money = purchase_item(2.50, 10)
-    print(f"Purchased: {num_purchased}, Money Left: ${leftover_money:.2f}")
-
-    print("\nTesting new_random_monster function:")
-    for _ in range(3):
-        monster = new_random_monster()
-        print(f"Name: {monster['name']}")
-        print(f"Description: {monster['description']}")
-        print(f"Health: {monster['health']}")
-        print(f"Power: {monster['power']}")
-        print(f"Money: ${monster['money']:.2f}\n")
-
-    print("\nTesting print_welcome function:")
-    print_welcome("Haley")
-    print_welcome("Jeff")
-    print_welcome("Professor")
-
-    print("\nTesting print_shop_menu function:")
-    print_shop_menu("Apple", 2.75, "Orange", 1.50)
-    print_shop_menu("Egg", .23, "Milk", 12.34)
-
-def test_functions():
-    """
-    Runs test cases for all functions.
-    """
-    print_welcome("Haley")
-    print_shop_menu("Apple", 2.75, "Orange", 1.50)
-    
-    num_purchased, money_left = purchase_item(1.23, 10, 3)
-    print(f"Purchased: {num_purchased}, Money Left: ${leftover_money:.2f}")
-    
-    monster = new_random_monster()
-    print(f"Encountered monster: {monster['name']}, {monster['description']}, ${monster['money']:.2f}")
-
-if __name__ == "__main__":
-    test_functions()
-
 def combat_loop(player_hp, monster, player_gold, weapon, inventory):
     """
     Handles the combat loop between the player and the monster.
@@ -258,8 +234,20 @@ def combat_loop(player_hp, monster, player_gold, weapon, inventory):
             player_gold += monster_money
             break
 
-        player_hp -= monster_power
-        print(f"The {monster['name']} hit you for {monster_power} damage!")
+        damage_taken = monster_power
+
+        # Reduce damage if armor is equipped
+        armor = next((item for item in inventory if item["type"] == "armor"), None)
+        if armor:
+            print(f"Your {armor['name']} absorbs some damage!")
+            damage_taken = max(0, damage_taken - 5)
+            armor["currentDurability"] -= 1
+            if armor["currentDurability"] <= 0:
+                print(f"Your {armor['name']} broke!")
+                inventory.remove(armor)
+
+        player_hp -= damage_taken
+        print(f"The {monster['name']} hit you for {damage_taken} damage!")
 
         if player_hp <= 0:
             print("You have been defeated by the monster!")
@@ -309,9 +297,108 @@ def sleep(player_hp, player_gold, max_hp):
     print(f"You slept at an Inn and recovered {heal_amount} HP. Current HP: {player_hp}, Gold left: {player_gold:.2f}")
     return player_hp, player_gold
 
-# This program implements four functions for an adventure-style game:
+import json
+
+def save_game(filename: str, game_data: dict) -> None:
+    """
+    Saves the game state to a JSON file.
+
+    Args:
+        filename (str): The name of the file to save to.
+        game_data (dict): The player's game state.
+    """
+    try:
+        with open(filename, 'w') as f:
+            json.dump(game_data, f, indent=4)
+        print(f"Game saved to {filename}!")
+    except Exception as e:
+        print(f"Error saving game: {e}")
+
+def load_game(filename: str) -> dict:
+    """
+    Loads the game state from a JSON file.
+
+    Args:
+        filename (str): The name of the file to load.
+
+    Returns:
+        dict: The player's game state.
+    """
+    try:
+        with open(filename, 'r') as f:
+            game_data = json.load(f)
+        print(f"Game loaded from {filename}!")
+        return game_data
+    except FileNotFoundError:
+        print(f"No save file found at {filename}.")
+    except Exception as e:
+        print(f"Error loading game: {e}")
+    return None
+
+import os
+
+def start_game(filename="savefile.json"):
+    """
+    Handles game start logic, prompting the user to load or start new.
+    Returns initialized game state.
+
+    Returns:
+        tuple: (player_name, player_hp, player_gold, max_hp, player_inventory, equipped_weapon, equipped_armor)
+    """
+    print("Welcome to the Adventure Game!")
+    print("1) Start New Game")
+    print("2) Load Saved Game")
+    start_choice = input("Enter choice (1-2): ")
+    while start_choice not in ["1", "2"]:
+        print("Invalid input. Please choose 1 or 2.")
+        start_choice = input("Enter choice (1-2): ")
+
+    if start_choice == "2" and os.path.exists(filename):
+        data = load_game(filename)
+        if data:
+            return (
+                data.get("player_name", "Unknown"),
+                data.get("player_hp", 30),
+                data.get("player_gold", 10),
+                data.get("max_hp", 30),
+                data.get("player_inventory", []),
+                data.get("equipped_weapon"),
+                data.get("equipped_armor")
+            )
+        else:
+            print("Failed to load. Starting a new game...")
+
+    # Default new game state
+    player_name = input("Enter your name: ")
+    return (
+        player_name,
+        30,  # player_hp
+        10,  # player_gold
+        30,  # max_hp
+        [],  # inventory
+        None,  # equipped_weapon
+        None   # equipped_armor
+    )
+
+def save_and_quit(filename, player_name, player_hp, player_gold, max_hp, inventory, weapon, armor):
+    """
+    Saves game state and quits.
+    """
+    game_data = {
+        "player_name": player_name,
+        "player_hp": player_hp,
+        "player_gold": player_gold,
+        "max_hp": max_hp,
+        "player_inventory": inventory,
+        "equipped_weapon": weapon,
+        "equipped_armor": armor
+    }
+    save_game(filename, game_data)
+    print("Game saved. Goodbye!")
+
+# This program implements functions for an adventure-style game:
 # 1. purchase_item(): Calculates how many items can be purchased with a given amount of money.
 # 2. new_random_monster(): Generates a random monster with different attributes.
 # 3. print_welcome(): Prints a welcome message that is centered within 20 characters.
 # 4. print_shop_menu(): Prints a shop sign with menu items and prices.
-# The program also includes test cases to demonstrate the functionality of both functions.
+# 5. 
