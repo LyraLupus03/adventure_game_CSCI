@@ -36,6 +36,12 @@ Functions:
 - handle_monster_fight(player_hp, player_gold, inventory, equipped_weapon):
     Sets up a monster encounter and lets the player fight or use a consumable.
 
+- handle_revive(player_gold, doctor_visits): 
+    Applies the revival system after defeat.
+
+- handle_adventure(player_hp, player_gold, inventory, equipped_weapon, doctor_visits): 
+    Manages full fight + revive flow.
+
 - sleep(player_hp, player_gold, max_hp):
     Restores player HP by a fixed amount in exchange for gold.
 
@@ -503,7 +509,7 @@ def start_game(filename="savefile.json"):
     Returns initialized game state.
 
     Returns:
-        tuple: (player_name, player_hp, player_gold, max_hp, player_inventory, equipped_weapon, equipped_armor)
+        tuple: (player_name, player_hp, player_gold, max_hp, player_inventory, equipped_weapon, equipped_armor, doctor_visits)
     """
     print("Welcome to the Adventure Game!")
     print("1) Start New Game")
@@ -557,6 +563,7 @@ def save_and_quit(filename, player_name, player_hp, player_gold, max_hp, invento
         inventory (list): The player's inventory of items.
         weapon (dict or None): The currently equipped weapon.
         armor (dict or None): The currently equipped armor.
+        doctor_visits (int): Number of times the player has been revived by the doctor.
 
     Returns:
         None
