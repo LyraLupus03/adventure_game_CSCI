@@ -9,6 +9,12 @@ This script provides functions for an adventure-style game, including sleeping t
 displaying a shop menu, processing item purchases, and generating random monsters to fight.
 
 Functions:
+- print_welcome(name):
+    Prints a welcome message, centered within a fixed width.
+
+- print_shop_menu(item1Name, item1Price, item2Name, item2Price):
+    Displays a decorative ASCII menu for shop items.
+
 - purchase_item(itemPrice, startingMoney, quantityToPurchase):
     Calculates how many items can be bought with available money.
 
@@ -23,12 +29,6 @@ Functions:
 
 - new_random_monster():
     Returns a randomly generated monster with name, description, stats, and reward.
-
-- print_welcome(name):
-    Prints a welcome message, centered within a fixed width.
-
-- print_shop_menu(item1Name, item1Price, item2Name, item2Price):
-    Displays a decorative ASCII menu for shop items.
 
 - combat_loop(player_hp, monster, player_gold, weapon, inventory):
     Runs the combat sequence between the player and the monster, updating health and inventory.
@@ -54,17 +54,59 @@ Functions:
 
 import random
 
+def print_welcome(name: str) -> None:
+    """
+    Prints a decorative welcome message centered in a 40-character wide box.
+
+    Args:
+        name (str): The name of the player.
+
+    Returns:
+        None 
+    """
+    print(f"\n{'=' * 40}")
+    print(f"{'Hello, ' + name + '!':^40}")
+    print(f"{'=' * 40}\n")
+
+def print_shop_menu(item1Name: str, item1Price: float, item2Name: str, item2Price: float) -> None:
+    """
+    Prints a stylized ASCII box shop sign with menu items and prices.
+
+    Args:
+        item1Name (str): Name of the first item.
+        item1Price (float): Price of the first item.
+        item2Name (str): Name of the second item.
+        item2Price (float): Price of the second item.
+
+    Returns:
+        None
+    """
+    content1 = f"{item1Name:<12} ${item1Price:.2f}"
+    content2 = f"{item2Name:<12} ${item2Price:.2f}"
+    content_width = max(len(content1), len(content2))
+
+    line1 = f"| {content1:<{content_width}} |"
+    line2 = f"| {content2:<{content_width}} |"
+
+    border = f"/{'-' * (len(line1) - 2)}\\"
+    bottom = f"\\{'-' * (len(line1) - 2)}/"
+
+    print(border)
+    print(line1)
+    print(line2)
+    print(bottom)
+
 def purchase_item(itemPrice: float, startingMoney: float, quantityToPurchase: int = 1) -> tuple:
     """
     Calculates how many items can be purchased and the remaining money.
 
     Args:
         itemPrice (float): Price of a single item.
-        startingMoney (float): The total amount of money available.
+        startingMoney (float): Player's current money.
         quantityToPurchase (int, optional): Number of items player wants to buy. Defaults to 1.
 
     Returns:
-        tuple: (Number of items purchased, Remaining money)
+        tuple: (int) Number of items purchased, (float) remaining money.
     """
     total_cost = itemPrice * quantityToPurchase
     if total_cost <= startingMoney:
@@ -74,6 +116,17 @@ def purchase_item(itemPrice: float, startingMoney: float, quantityToPurchase: in
         return max_purchasable, startingMoney - (max_purchasable * itemPrice)
 
 def visit_shop(player_gold, inventory):
+    """
+    Displays the shop interface, allows the player to purchase an item if they have enough gold,
+    and updates the inventory and gold accordingly.
+
+    Args:
+        player_gold (float): The player's current gold.
+        inventory (list): The player's inventory list of item dictionaries.
+
+    Returns:
+        tuple: (float) Updated player gold, (list) Updated inventory.
+    """
     items_for_sale = [
         {"name": "sword", "type": "weapon", "maxDurability": 5, "currentDurability": 5, "price": 10},
         {"name": "shield", "type": "armor", "maxDurability": 5, "currentDurability": 5, "price": 8},
@@ -123,6 +176,16 @@ def visit_shop(player_gold, inventory):
     return player_gold, inventory
 
 def equip_item(inventory, item_type):
+    """
+    Prompts the player to choose an item of a specific type (e.g., weapon or armor) to equip from their inventory.
+
+    Args:
+        inventory (list): The player's inventory containing item dictionaries.
+        item_type (str): The type of item to equip (e.g., "weapon", "armor").
+
+    Returns:
+        dict or None: The equipped item dictionary if selection is valid, otherwise None.
+    """
     relevant_items = [item for item in inventory if item["type"] == item_type]
     if not relevant_items:
         print(f"No {item_type}s available to equip.")
@@ -151,7 +214,7 @@ def handle_equipment(inventory, equipped_weapon, equipped_armor):
         equipped_armor (dict or None): Currently equipped armor.
 
     Returns:
-        tuple: (equipped_weapon, equipped_armor)
+        tuple: (dict or None) Updated equipped_weapon, (dict or None) Updated equipped_armor.
     """
     print("What would you like to equip?")
     print("1) Weapon")
@@ -173,7 +236,7 @@ def new_random_monster() -> dict:
     Generates a random monster with a name, description, health, power, and money.
 
     Returns:
-        dict: A dictionary containing monster attributes.
+        dict: A dictionary containing the monster's name, description, health, power, and money reward.
     """
     monsters = [
         {
@@ -201,63 +264,22 @@ def new_random_monster() -> dict:
 
     return random.choice(monsters)
 
-def print_welcome(name: str) -> None:
-    """
-    Prints a welcome message centered within 20 characters.
-
-    Args:
-        name (str): The name of the player.
-
-    Returns:
-        None
-
-    Example:
-        >>> print_welcome("Alice")
-        Hello, Alice!   
-    """
-    print(f"\n{'=' * 40}")
-    print(f"{'Hello, ' + name + '!':^40}")
-    print(f"{'=' * 40}\n")
-
-def print_shop_menu(item1Name: str, item1Price: float, item2Name: str, item2Price: float) -> None:
-    """
-    Prints a shop sign with menu items and prices.
-
-    Args:
-        item1Name (str): Name of the first item.
-        item1Price (float): Price of the first item.
-        item2Name (str): Name of the second item.
-        item2Price (float): Price of the second item.
-
-    Returns:
-        None
-    """
-    content1 = f"{item1Name:<12} ${item1Price:.2f}"
-    content2 = f"{item2Name:<12} ${item2Price:.2f}"
-    content_width = max(len(content1), len(content2))
-
-    line1 = f"| {content1:<{content_width}} |"
-    line2 = f"| {content2:<{content_width}} |"
-
-    border = f"/{'-' * (len(line1) - 2)}\\"
-    bottom = f"\\{'-' * (len(line1) - 2)}/"
-
-    print(border)
-    print(line1)
-    print(line2)
-    print(bottom)
-
 def combat_loop(player_hp, monster, player_gold, weapon, inventory):
     """
     Handles the combat loop between the player and the monster.
 
     Args:
-        player_hp (int): Player's health.
-        monster (dict): The monster dictionary.
-        player_gold (float): Player's gold.
+        player_hp (int): The player's current HP.
+        monster (dict): Dictionary representing the monster's stats and description.
+        player_gold (float): The player's current amount of gold.
+        weapon (dict or None): The currently equipped weapon (if any).
+        inventory (list): The player's inventory containing items.
 
     Returns:
-        tuple: Updated player_hp and player_gold.
+        tuple:
+            (int) Updated player HP,
+            (float) Updated player gold,
+            (dict or None) Updated equipped weapon (may be None if broken).
     """
     monster_hp = monster['health']
     monster_power = monster['power']
@@ -313,6 +335,22 @@ def combat_loop(player_hp, monster, player_gold, weapon, inventory):
     return player_hp, player_gold, weapon
 
 def handle_monster_fight(player_hp, player_gold, inventory, equipped_weapon):
+    """
+    Initiates a monster encounter. Allows the player to either use a consumable item to defeat
+    the monster instantly or engage in combat.
+
+    Args:
+        player_hp (int): The player's current HP.
+        player_gold (float): The player's current gold.
+        inventory (list): The player's inventory including consumables.
+        equipped_weapon (dict or None): The currently equipped weapon, if any.
+
+    Returns:
+        tuple:
+            (int) Updated player HP,
+            (float) Updated player gold,
+            (dict or None) Updated equipped weapon (may break in combat).
+    """
     monster = new_random_monster()
     print(f"\nYou leave town and encounter a {monster['name']}!")
     print(monster["description"])
@@ -363,6 +401,9 @@ def save_game(filename: str, game_data: dict) -> None:
     Args:
         filename (str): The name of the file to save to.
         game_data (dict): The player's game state.
+    
+    Returns:
+        None
     """
     try:
         with open(filename, 'w') as f:
@@ -379,7 +420,7 @@ def load_game(filename: str) -> dict:
         filename (str): The name of the file to load.
 
     Returns:
-        dict: The player's game state.
+        dict or None: Loaded game data if successful, or None if loading fails.
     """
     try:
         with open(filename, 'r') as f:
@@ -442,6 +483,19 @@ def start_game(filename="savefile.json"):
 def save_and_quit(filename, player_name, player_hp, player_gold, max_hp, inventory, weapon, armor):
     """
     Saves game state and quits.
+
+    Args:
+        filename (str): The name of the file to save data into.
+        player_name (str): The player's name.
+        player_hp (int): The player's current HP.
+        player_gold (float): The player's current gold.
+        max_hp (int): The player's maximum HP.
+        inventory (list): The player's inventory of items.
+        weapon (dict or None): The currently equipped weapon.
+        armor (dict or None): The currently equipped armor.
+
+    Returns:
+        None
     """
     game_data = {
         "player_name": player_name,
@@ -454,10 +508,3 @@ def save_and_quit(filename, player_name, player_hp, player_gold, max_hp, invento
     }
     save_game(filename, game_data)
     print("Game saved. Goodbye!")
-
-# This program implements functions for an adventure-style game:
-# 1. purchase_item(): Calculates how many items can be purchased with a given amount of money.
-# 2. new_random_monster(): Generates a random monster with different attributes.
-# 3. print_welcome(): Prints a welcome message that is centered within 20 characters.
-# 4. print_shop_menu(): Prints a shop sign with menu items and prices.
-# 5. 
