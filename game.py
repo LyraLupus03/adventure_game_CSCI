@@ -15,7 +15,7 @@ def main():
     Runs the main game logic, prompting user input and using imported functions.
     """
     (player_name, player_hp, player_gold, max_hp,
-    player_inventory, equipped_weapon, equipped_armor) = gamefunctions.start_game()
+    player_inventory, equipped_weapon, equipped_armor, doctor_visits) = gamefunctions.start_game()
 
     while True:
         print("\nYou are in town.")
@@ -34,8 +34,8 @@ def main():
             choice = input("Enter choice (1-6): ")
 
         if choice == "1":
-            player_hp, player_gold, equipped_weapon = gamefunctions.handle_monster_fight(
-            player_hp, player_gold, player_inventory, equipped_weapon)
+            player_hp, player_gold, equipped_weapon, doctor_visits = gamefunctions.handle_adventure(
+                player_hp, player_gold, player_inventory, equipped_weapon, doctor_visits)
         elif choice == "2":
             player_hp, player_gold = gamefunctions.sleep(player_hp, player_gold, max_hp)
         elif choice == "3":
@@ -47,7 +47,7 @@ def main():
             print("Thanks for playing!")
         elif choice == "6":
             gamefunctions.save_and_quit("savefile.json", player_name, player_hp,
-                player_gold, max_hp, player_inventory, equipped_weapon, equipped_armor)
+                player_gold, max_hp, player_inventory, equipped_weapon, equipped_armor, doctor_visits)
             break
 
 if __name__ == "__main__":

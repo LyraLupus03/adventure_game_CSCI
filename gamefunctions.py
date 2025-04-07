@@ -330,6 +330,7 @@ def combat_loop(player_hp, monster, player_gold, weapon, inventory):
 
         if player_hp <= 0:
             print("You have been defeated by the monster!")
+            return "revive", player_gold, weapon
             break
 
     return player_hp, player_gold, weapon
@@ -365,8 +366,69 @@ def handle_monster_fight(player_hp, player_gold, inventory, equipped_weapon):
             print(f"You used {consumables[0]['name']} and defeated the monster without damage!")
             player_gold += monster["money"]
             return player_hp, player_gold, equipped_weapon
+    
+    result = combat_loop(player_hp, monster, player_gold, equipped_weapon, inventory)
 
-    return combat_loop(player_hp, monster, player_gold, equipped_weapon, inventory)
+    if result[0] == "revive":
+        return "revive", result[1], result[2]
+
+    return result
+
+def handle_revive(player_gold, doctor_visits):
+    """
+    Handles revival after defeat, including doctor rescue logic and gold deduction.
+
+    Args:
+        player_gold (float): The player's current gold.
+        doctor_visits (int): How many times the doctor has already rescued the player.
+
+    Returns:
+        tuple:
+            - (int) player_hp (restored to 10),
+            - (float) updated player_gold,
+            - (int) updated doctor_visits
+    """
+    doctor_visits += 1
+    player_hp = 10
+
+    if doctor_visits == 1:
+        print("\nA stranger finds you unconscious and brings you to a doctor.")
+        print("The doctor patches you up for free. You're restored to 10 HP.")
+    else:
+        player_gold -= 10
+        print("\nOnce again, the doctor finds you... but this time, it costs you 10 gold.")
+        print(f"Your new gold balance is: {player_gold:.2f}")
+
+    return player_hp, player_gold, doctor_visits
+
+def handle_adventure(player_hp, player_gold, inventory, equipped_weapon, doctor_visits):
+    """
+    Handles the monster encounter and revival process if the player is defeated.
+
+    Args:
+        player_hp (int): Current HP of the player.
+        player_gold (float): Current gold.
+        inventory (list): Player's inventory.
+        equipped_weapon (dict or None): Equipped weapon.
+        doctor_visits (int): Number of times revived by the doctor.
+
+    Returns:
+        tuple: 
+            (int) Updated player_hp,
+            (float) Updated player_gold,
+            (dict or None) Updated equipped_weapon,
+            (int) Updated doctor_visits
+    """
+    result = handle_monster_fight(player_hp, player_gold, inventory, equipped_weapon)
+
+    if result[0] == "revive":
+        player_gold = result[1]
+        equipped_weapon = result[2]
+        player_hp, player_gold, doctor_visits = handle_revive(player_gold, doctor_visits)
+    else:
+        player_hp, player_gold, equipped_weapon = result
+
+    return player_hp, player_gold, equipped_weapon, doctor_visits
 
 def sleep(player_hp, player_gold, max_hp):
     """
@@ -462,7 +524,8 @@ def start_game(filename="savefile.json"):
                 data.get("max_hp", 30),
                 data.get("player_inventory", []),
                 data.get("equipped_weapon"),
-                data.get("equipped_armor")
+                data.get("equipped_armor"),
+                data.get("doctor_visits", 0)
             )
         else:
             print("Failed to load. Starting a new game...")
@@ -477,10 +540,11 @@ def start_game(filename="savefile.json"):
         30,  # max_hp
         [],  # inventory
         None,  # equipped_weapon
-        None   # equipped_armor
-    )
+        None,  # equipped_armor
+        0    # doctor_visits
+        )
 
-def save_and_quit(filename, player_name, player_hp, player_gold, max_hp, inventory, weapon, armor):
+def save_and_quit(filename, player_name, player_hp, player_gold, max_hp, inventory, weapon, armor, doctor_visits):
     """
     Saves game state and quits.
 
@@ -504,7 +568,8 @@ def save_and_quit(filename, player_name, player_hp, player_gold, max_hp, invento
         "max_hp": max_hp,
         "player_inventory": inventory,
         "equipped_weapon": weapon,
-        "equipped_armor": armor
+        "equipped_armor": armor,
+        "doctor_visits": doctor_visits
     }
     save_game(filename, game_data)
     print("Game saved. Goodbye!")
