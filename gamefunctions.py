@@ -56,9 +56,24 @@ Functions:
 
 - save_and_quit(filename, player_name, player_hp, player_gold, max_hp, inventory, weapon, armor):
     Saves all game data to a file and exits the game.
+
+- launch_map(player_pos, monster_pos, town_pos)
+    Launches the Pygame window and handles user input to move around a 10x10 grid.
+
+- get_persistent_map_state()
+    Handles loading or initializing map state from file.
+
+- save_map_state(player_pos)
+    Saves player’s current position on the map.
+
+- launch_map_adventure(player_hp, player_gold, inventory, equipped_weapon, doctor_visits)
+    Wrapper for handling town, monster, or exit results.
 """
 
 import random
+import pygame
+import os
+import json
 
 def print_welcome(name: str) -> None:
     """
@@ -460,8 +475,6 @@ def sleep(player_hp, player_gold, max_hp):
     print(f"You slept at an Inn and recovered {heal_amount} HP. Current HP: {player_hp}, Gold left: {player_gold:.2f}")
     return player_hp, player_gold
 
-import json
-
 def save_game(filename: str, game_data: dict) -> None:
     """
     Saves the game state to a JSON file.
@@ -500,8 +513,6 @@ def load_game(filename: str) -> dict:
     except Exception as e:
         print(f"Error loading game: {e}")
     return None
-
-import os
 
 def start_game(filename="savefile.json"):
     """
@@ -580,3 +591,177 @@ def save_and_quit(filename, player_name, player_hp, player_gold, max_hp, invento
     }
     save_game(filename, game_data)
     print("Game saved. Goodbye!")
+
+MAP_STATE_FILE = "map_state.json"
+
+def get_persistent_map_state():
+    """
+    Loads or initializes the persistent map state with fixed monster/town positions.
+
+    Returns:
+        dict: Dictionary with player position, town position, monster position.
+    """
+    if os.path.exists(MAP_STATE_FILE):
+        with open(MAP_STATE_FILE, 'r') as f:
+            return json.load(f)
+    else:
+        # Default map state
+        state = {
+            "player_pos": [5, 5],
+            "town_pos": [5, 5],
+            "monster_pos": [2, 7]
+        }
+        with open(MAP_STATE_FILE, 'w') as f:
+            json.dump(state, f)
+        return state
+    
+def save_map_state(player_pos):
+    """
+    Saves the player's last position to persist across sessions.
+
+    Args:
+        player_pos (tuple): The player's current (x, y) grid coordinates.
+
+    Returns:
+        None
+    """
+    state = get_persistent_map_state()
+    state["player_pos"] = player_pos
+    with open(MAP_STATE_FILE, 'w') as f:
+        json.dump(state, f)
+
+def launch_map(player_pos, monster_pos, town_pos):
+    """
+    Launches a graphical 10x10 grid using Pygame where the player can move and encounter events.
+
+    Args:
+        player_pos (list): Current [x, y] grid coordinates.
+        monster_pos (list): Monster [x, y] location.
+        town_pos (list): Town [x, y] location.
+
+    Returns:
+        str: "monster", "town", or "exit"
+    """
+    pygame.init()
+    TILE_SIZE = 32
+    GRID_SIZE = 10
+    WIDTH, HEIGHT = TILE_SIZE * GRID_SIZE, TILE_SIZE * GRID_SIZE
+
+    print("Opening map...")
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("Adventure Map")
+
+    clock = pygame.time.Clock()
+
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                save_map_state(player_pos)
+                pygame.quit()
+                return "exit"
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_x:
+                    save_map_state(player_pos)
+                    pygame.quit()
+                    return "exit"
+                elif event.key == pygame.K_UP and player_pos[1] > 0:
+                    player_pos[1] -= 1
+                elif event.key == pygame.K_DOWN and player_pos[1] < 9:
+                    player_pos[1] += 1
+                elif event.key == pygame.K_LEFT and player_pos[0] > 0:
+                    player_pos[0] -= 1
+                elif event.key == pygame.K_RIGHT and player_pos[0] < 9:
+                    player_pos[0] += 1
+
+        # Check for events
+        if player_pos == monster_pos:
+            save_map_state(player_pos)
+            pygame.quit()
+            return "monster"
+        if player_pos == town_pos and player_pos != monster_pos:
+            save_map_state(player_pos)
+            pygame.quit()
+            return "town"
+
+        # Drawing
+        screen.fill((0, 0, 0))  # Clear screen
+
+        for row in range(GRID_SIZE):
+            for col in range(GRID_SIZE):
+                rect = pygame.Rect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                pygame.draw.rect(screen, (200, 200, 200), rect, 1)  # draw grid border
+
+        # Draw town
+        pygame.draw.circle(
+            screen, (0, 255, 0),
+            (town_pos[0] * TILE_SIZE + TILE_SIZE // 2, town_pos[1] * TILE_SIZE + TILE_SIZE // 2),
+            TILE_SIZE // 3
+        )
+
+        # Draw monster
+        pygame.draw.circle(
+            screen, (255, 0, 0),
+            (monster_pos[0] * TILE_SIZE + TILE_SIZE // 2, monster_pos[1] * TILE_SIZE + TILE_SIZE // 2),
+            TILE_SIZE // 3
+        )
+
+        # Draw player
+        player_rect = pygame.Rect(
+            player_pos[0] * TILE_SIZE, player_pos[1] * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+        pygame.draw.rect(screen, (0, 0, 255), player_rect)
+
+        pygame.display.flip()
+        clock.tick(30)
+
+    pygame.quit()
+    return "exit"
+        
+def launch_map_adventure(player_hp, player_gold, inventory, equipped_weapon, doctor_visits):
+    """
+    Handles the launch and interaction with the exploration map, triggering events accordingly.
+
+    Args:
+        player_hp (int): Player HP
+        player_gold (float): Player gold
+        inventory (list): Inventory list
+        equipped_weapon (dict): Equipped weapon
+        doctor_visits (int): Number of times revived
+
+    Returns:
+        tuple: Updated (player_hp, player_gold, equipped_weapon, doctor_visits)
+    """
+    import random
+
+    state = get_persistent_map_state()
+
+    # Randomize monster position (not overlapping town)
+    while True:
+        new_monster = [random.randint(0, 9), random.randint(0, 9)]
+        if new_monster != state["town_pos"]:
+            break
+
+    state["monster_pos"] = new_monster
+
+    # Move player off town or monster tile before launching map
+    def move_off_tile(tile):
+        if state["player_pos"] == tile:
+            if tile[1] < 9:
+                state["player_pos"][1] += 1
+            else:
+                state["player_pos"][1] -= 1
+
+    move_off_tile(state["town_pos"])
+    move_off_tile(state["monster_pos"])
+
+    save_map_state(state["player_pos"])  # Save new starting position
+    result = launch_map(state["player_pos"], state["monster_pos"], state["town_pos"])
+
+    if result == "monster":
+        return handle_adventure(player_hp, player_gold, inventory, equipped_weapon, doctor_visits)
+    elif result == "town":
+        print("You returned to town.")
+        return player_hp, player_gold, equipped_weapon, doctor_visits
+    else:
+        print("You left the map without incident.")
+        return player_hp, player_gold, equipped_weapon, doctor_visits
