@@ -34,7 +34,7 @@ def main():
             choice = input("Enter choice (1-6): ")
 
         if choice == "1":
-            player_hp, player_gold, equipped_weapon, doctor_visits = gamefunctions.launch_map_adventure(
+            player_hp, player_gold, equipped_weapon, doctor_visits = gamefunctions.explore_until_town(
                 player_hp, player_gold, player_inventory, equipped_weapon, doctor_visits)
         elif choice == "2":
             player_hp, player_gold = gamefunctions.sleep(player_hp, player_gold, max_hp)

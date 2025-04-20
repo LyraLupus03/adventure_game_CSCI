@@ -68,6 +68,9 @@ Functions:
 
 - launch_map_adventure(player_hp, player_gold, inventory, equipped_weapon, doctor_visits)
     Wrapper for handling town, monster, or exit results.
+
+- explore_until_town(player_hp, player_gold, inventory, equipped_weapon, doctor_visits)
+    Keeps the player in the map exploration loop until they return to town or exit.
 """
 
 import random
@@ -733,35 +736,55 @@ def launch_map_adventure(player_hp, player_gold, inventory, equipped_weapon, doc
     """
     import random
 
-    state = get_persistent_map_state()
-
-    # Randomize monster position (not overlapping town)
     while True:
-        new_monster = [random.randint(0, 9), random.randint(0, 9)]
-        if new_monster != state["town_pos"]:
+        state = get_persistent_map_state()
+
+        # Randomize monster position (not overlapping town)
+        while True:
+            new_monster = [random.randint(0, 9), random.randint(0, 9)]
+            if new_monster != state["town_pos"]:
+                break
+
+        state["monster_pos"] = new_monster
+
+        # Move player off town or monster tile before launching map
+        def move_off_tile(tile):
+            if state["player_pos"] == tile:
+                if tile[1] < 9:
+                    state["player_pos"][1] += 1
+                else:
+                    state["player_pos"][1] -= 1
+
+        move_off_tile(state["town_pos"])
+        move_off_tile(state["monster_pos"])
+
+        save_map_state(state["player_pos"])  # Save new starting position
+        result = launch_map(state["player_pos"], state["monster_pos"], state["town_pos"])
+
+        if result == "monster":
+            player_hp, player_gold, equipped_weapon, doctor_visits = handle_adventure(
+                player_hp, player_gold, inventory, equipped_weapon, doctor_visits
+            )
+            print("Returning to the map...")
+            return "continue", player_hp, player_gold, equipped_weapon, doctor_visits
+        elif result == "town":
+            print("You returned to town.")
+            return "town", player_hp, player_gold, equipped_weapon, doctor_visits
+        else:
+            print("You left the map without incident.")
+            return "town", player_hp, player_gold, equipped_weapon, doctor_visits
+    
+def explore_until_town(player_hp, player_gold, inventory, equipped_weapon, doctor_visits):
+    """
+    Keeps the player in the map exploration loop until they return to town or exit.
+
+    Returns:
+        tuple: Updated (player_hp, player_gold, equipped_weapon, doctor_visits)
+    """
+    while True:
+        result, player_hp, player_gold, equipped_weapon, doctor_visits = launch_map_adventure(
+            player_hp, player_gold, inventory, equipped_weapon, doctor_visits
+        )
+        if result == "town":
             break
-
-    state["monster_pos"] = new_monster
-
-    # Move player off town or monster tile before launching map
-    def move_off_tile(tile):
-        if state["player_pos"] == tile:
-            if tile[1] < 9:
-                state["player_pos"][1] += 1
-            else:
-                state["player_pos"][1] -= 1
-
-    move_off_tile(state["town_pos"])
-    move_off_tile(state["monster_pos"])
-
-    save_map_state(state["player_pos"])  # Save new starting position
-    result = launch_map(state["player_pos"], state["monster_pos"], state["town_pos"])
-
-    if result == "monster":
-        return handle_adventure(player_hp, player_gold, inventory, equipped_weapon, doctor_visits)
-    elif result == "town":
-        print("You returned to town.")
-        return player_hp, player_gold, equipped_weapon, doctor_visits
-    else:
-        print("You left the map without incident.")
-        return player_hp, player_gold, equipped_weapon, doctor_visits
+    return player_hp, player_gold, equipped_weapon, doctor_visits
