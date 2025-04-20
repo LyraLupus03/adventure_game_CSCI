@@ -77,6 +77,7 @@ import random
 import pygame
 import os
 import json
+from wanderingMonster import WanderingMonster
 
 def print_welcome(name: str) -> None:
     """
