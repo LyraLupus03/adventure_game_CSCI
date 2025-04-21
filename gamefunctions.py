@@ -71,6 +71,12 @@ Functions:
 
 - explore_until_town(player_hp, player_gold, inventory, equipped_weapon, doctor_visits)
     Keeps the player in the map exploration loop until they return to town or exit.
+
+- init_wandering_monsters()
+    Initializes or reloads two monsters on the map and persists them.
+
+- handle_adventure_with_monster(player_hp, player_gold, inventory, equipped_weapon, doctor_visits, monster_data)
+    Handles combat using a specific monster passed from the map.
 """
 
 import random
@@ -307,6 +313,7 @@ def combat_loop(player_hp, monster, player_gold, weapon, inventory):
             (dict or None) Updated equipped weapon (may be None if broken).
     """
     monster_hp = monster['health']
+    monster['health'] = monster_hp
     monster_power = monster['power']
     monster_money = monster['money']
 
@@ -317,7 +324,7 @@ def combat_loop(player_hp, monster, player_gold, weapon, inventory):
         choice = input("Enter choice (1-2): ")
 
         if choice == "2":
-            print("You ran away and returned to town.")
+            print("You ran away and returned to the map.")
             return player_hp, player_gold, weapon
 
         if weapon:
@@ -332,6 +339,7 @@ def combat_loop(player_hp, monster, player_gold, weapon, inventory):
 
         monster_hp -= damage
         print(f"You hit the {monster['name']} for {damage} damage!")
+        monster['health'] = monster_hp
 
         if monster_hp <= 0:
             print(f"You defeated the {monster['name']} and earned {monster_money:.2f} gold!")
@@ -452,6 +460,33 @@ def handle_adventure(player_hp, player_gold, inventory, equipped_weapon, doctor_
         player_hp, player_gold, doctor_visits = handle_revive(player_gold, doctor_visits)
     else:
         player_hp, player_gold, equipped_weapon = result
+
+    return player_hp, player_gold, equipped_weapon, doctor_visits
+
+def handle_adventure_with_monster(player_hp, player_gold, inventory, equipped_weapon, doctor_visits, monster_data):
+    """
+    Handles combat using a specific monster passed from the map.
+
+    Returns:
+        Updated player state after combat.
+    """
+    print(f"\nYou encountered a {monster_data['name']} on the map!")
+    print(monster_data.get("description"))
+
+    result = combat_loop(player_hp, monster_data, player_gold, equipped_weapon, inventory)
+
+    if result[0] == "revive":
+        player_gold = result[1]
+        equipped_weapon = result[2]
+        player_hp, player_gold, doctor_visits = handle_revive(player_gold, doctor_visits)
+
+    elif isinstance(result[0], int):
+        player_hp, player_gold, equipped_weapon = result
+        if monster_data['health'] <= 0:
+            state = get_persistent_map_state()
+            state["monsters"] = [m for m in state["monsters"] if m["pos"] != monster_data["pos"]]
+            with open(MAP_STATE_FILE, "w") as f:
+                json.dump(state, f)
 
     return player_hp, player_gold, equipped_weapon, doctor_visits
 
@@ -613,7 +648,7 @@ def get_persistent_map_state():
         state = {
             "player_pos": [5, 5],
             "town_pos": [5, 5],
-            "monster_pos": [2, 7]
+            "monsters": []
         }
         with open(MAP_STATE_FILE, 'w') as f:
             json.dump(state, f)
@@ -634,7 +669,7 @@ def save_map_state(player_pos):
     with open(MAP_STATE_FILE, 'w') as f:
         json.dump(state, f)
 
-def launch_map(player_pos, monster_pos, town_pos):
+def launch_map(player_pos, town_pos):
     """
     Launches a graphical 10x10 grid using Pygame where the player can move and encounter events.
 
@@ -647,6 +682,8 @@ def launch_map(player_pos, monster_pos, town_pos):
         str: "monster", "town", or "exit"
     """
     pygame.init()
+    state = get_persistent_map_state()
+
     TILE_SIZE = 32
     GRID_SIZE = 10
     WIDTH, HEIGHT = TILE_SIZE * GRID_SIZE, TILE_SIZE * GRID_SIZE
@@ -658,6 +695,7 @@ def launch_map(player_pos, monster_pos, town_pos):
     clock = pygame.time.Clock()
 
     running = True
+    player_move_count = 0
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -677,16 +715,53 @@ def launch_map(player_pos, monster_pos, town_pos):
                     player_pos[0] -= 1
                 elif event.key == pygame.K_RIGHT and player_pos[0] < 9:
                     player_pos[0] += 1
+                
+                player_move_count += 1
+                if player_move_count % 2 == 0:
+                    # Move monsters
+                    updated_monsters = []
+                    original_monsters = state["monsters"][:]
+                    occupied_positions = [m["pos"] for m in original_monsters]
+                    occupied_positions.append(player_pos)
 
-        # Check for events
-        if player_pos == monster_pos:
-            save_map_state(player_pos)
-            pygame.quit()
-            return "monster"
-        if player_pos == town_pos and player_pos != monster_pos:
-            save_map_state(player_pos)
-            pygame.quit()
-            return "town"
+                    for m in original_monsters:
+                        monster = WanderingMonster(pos=m["pos"])
+                        monster.name = m["name"]
+                        monster.color = list(WanderingMonster.COLORS.get(monster.name, (255, 255, 255)))
+
+                        monster.health = m["health"]
+                        monster.power = m["power"]
+                        monster.money = m["money"]
+
+                        # Exclude current monster's own pos from occupied list
+                        other_occupied = [pos for pos in occupied_positions if pos != m["pos"]]
+                        monster.move(other_occupied, state["town_pos"])
+
+                        updated_monsters.append({
+                            "name": monster.name,
+                            "health": monster.health,
+                            "power": monster.power,
+                            "money": monster.money,
+                            "pos": monster.pos,
+                            "color": monster.color,
+                            "description": m.get("description", "")
+                        })
+
+                    state["monsters"] = updated_monsters
+                    with open(MAP_STATE_FILE, 'w') as f:
+                        json.dump(state, f)
+
+                # Check if player stepped on a monster
+                for m in state.get("monsters", []):
+                    if player_pos == m["pos"]:
+                        save_map_state(player_pos)
+                        pygame.quit()
+                        return {"type": "monster", "monster": m}
+
+                if player_pos == town_pos:
+                    save_map_state(player_pos)
+                    pygame.quit()
+                    return {"type": "town"}
 
         # Drawing
         screen.fill((0, 0, 0))  # Clear screen
@@ -696,17 +771,19 @@ def launch_map(player_pos, monster_pos, town_pos):
                 rect = pygame.Rect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
                 pygame.draw.rect(screen, (200, 200, 200), rect, 1)  # draw grid border
 
+        # Draw monsters
+        monsters = state.get("monsters", [])
+        for m in monsters:
+            pygame.draw.circle(
+                screen, tuple(m["color"]),
+                (m["pos"][0] * TILE_SIZE + TILE_SIZE // 2, m["pos"][1] * TILE_SIZE + TILE_SIZE // 2),
+                TILE_SIZE // 3
+            )
+
         # Draw town
         pygame.draw.circle(
             screen, (0, 255, 0),
             (town_pos[0] * TILE_SIZE + TILE_SIZE // 2, town_pos[1] * TILE_SIZE + TILE_SIZE // 2),
-            TILE_SIZE // 3
-        )
-
-        # Draw monster
-        pygame.draw.circle(
-            screen, (255, 0, 0),
-            (monster_pos[0] * TILE_SIZE + TILE_SIZE // 2, monster_pos[1] * TILE_SIZE + TILE_SIZE // 2),
             TILE_SIZE // 3
         )
 
@@ -719,7 +796,7 @@ def launch_map(player_pos, monster_pos, town_pos):
         clock.tick(30)
 
     pygame.quit()
-    return "exit"
+    return {"type": "exit"}
         
 def launch_map_adventure(player_hp, player_gold, inventory, equipped_weapon, doctor_visits):
     """
@@ -735,20 +812,14 @@ def launch_map_adventure(player_hp, player_gold, inventory, equipped_weapon, doc
     Returns:
         tuple: Updated (player_hp, player_gold, equipped_weapon, doctor_visits)
     """
-    import random
+
+    state = get_persistent_map_state()
+    if not state.get("monsters"):
+        init_wandering_monsters()
 
     while True:
         state = get_persistent_map_state()
 
-        # Randomize monster position (not overlapping town)
-        while True:
-            new_monster = [random.randint(0, 9), random.randint(0, 9)]
-            if new_monster != state["town_pos"]:
-                break
-
-        state["monster_pos"] = new_monster
-
-        # Move player off town or monster tile before launching map
         def move_off_tile(tile):
             if state["player_pos"] == tile:
                 if tile[1] < 9:
@@ -757,18 +828,18 @@ def launch_map_adventure(player_hp, player_gold, inventory, equipped_weapon, doc
                     state["player_pos"][1] -= 1
 
         move_off_tile(state["town_pos"])
-        move_off_tile(state["monster_pos"])
 
         save_map_state(state["player_pos"])  # Save new starting position
-        result = launch_map(state["player_pos"], state["monster_pos"], state["town_pos"])
+        result = launch_map(state["player_pos"], state["town_pos"])
 
-        if result == "monster":
-            player_hp, player_gold, equipped_weapon, doctor_visits = handle_adventure(
-                player_hp, player_gold, inventory, equipped_weapon, doctor_visits
+        if isinstance(result, dict) and result.get("type") == "monster":
+            monster_data = result["monster"]
+            player_hp, player_gold, equipped_weapon, doctor_visits = handle_adventure_with_monster(
+                player_hp, player_gold, inventory, equipped_weapon, doctor_visits, monster_data
             )
             print("Returning to the map...")
             return "continue", player_hp, player_gold, equipped_weapon, doctor_visits
-        elif result == "town":
+        elif isinstance(result, dict) and result.get("type") == "town":
             print("You returned to town.")
             return "town", player_hp, player_gold, equipped_weapon, doctor_visits
         else:
@@ -789,3 +860,41 @@ def explore_until_town(player_hp, player_gold, inventory, equipped_weapon, docto
         if result == "town":
             break
     return player_hp, player_gold, equipped_weapon, doctor_visits
+
+def init_wandering_monsters():
+    """
+    Initializes or reloads two monsters on the map and persists them.
+    """
+    state = get_persistent_map_state()
+    town_pos = state["town_pos"]
+
+    monsters = []
+    occupied = [town_pos]
+
+    for _ in range(2):
+        while True:
+            new_pos = [random.randint(0, 9), random.randint(0, 9)]
+            if new_pos not in occupied:
+                break
+        occupied.append(new_pos)
+        base_monster = new_random_monster()
+        wm = WanderingMonster(pos=new_pos)
+        wm.name = base_monster["name"]
+        wm.health = base_monster["health"]
+        wm.power = base_monster["power"]
+        wm.money = base_monster["money"]
+
+        monsters.append({
+            "name": wm.name,
+            "health": wm.health,
+            "power": wm.power,
+            "money": wm.money,
+            "pos": wm.pos,
+            "color": wm.color,
+            "description": base_monster["description"]
+        })
+
+    state["monsters"] = monsters
+
+    with open(MAP_STATE_FILE, 'w') as f:
+        json.dump(state, f)
