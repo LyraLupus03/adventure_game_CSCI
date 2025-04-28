@@ -788,7 +788,7 @@ def launch_map(player_pos, town_pos):
         # Draw monsters
         monsters = state.get("monsters", [])
         for m in monsters:
-            monster_name = m["name"]
+            monster_name = m["name"].capitalize()
             monster_pos = (m["pos"][0] * TILE_SIZE, m["pos"][1] * TILE_SIZE)
 
             if monster_name in monster_images and monster_images[monster_name]:
