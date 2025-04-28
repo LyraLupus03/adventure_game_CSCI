@@ -694,6 +694,20 @@ def launch_map(player_pos, town_pos):
 
     clock = pygame.time.Clock()
 
+    try:
+        player_image = pygame.transform.scale(
+            pygame.image.load('images/player.png'), (32, 32))
+    except Exception:
+        player_image = None
+
+    monster_images = {}
+    for name in ["Vampire", "Frog", "Pixie"]:
+        try:
+            monster_images[name] = pygame.transform.scale(
+                pygame.image.load(f'images/{name.lower()}.png'), (32, 32))
+        except Exception:
+            monster_images[name] = None
+
     running = True
     player_move_count = 0
     while running:
@@ -774,11 +788,15 @@ def launch_map(player_pos, town_pos):
         # Draw monsters
         monsters = state.get("monsters", [])
         for m in monsters:
-            pygame.draw.circle(
-                screen, tuple(m["color"]),
-                (m["pos"][0] * TILE_SIZE + TILE_SIZE // 2, m["pos"][1] * TILE_SIZE + TILE_SIZE // 2),
-                TILE_SIZE // 3
-            )
+            monster_name = m["name"]
+            monster_pos = (m["pos"][0] * TILE_SIZE, m["pos"][1] * TILE_SIZE)
+
+            if monster_name in monster_images and monster_images[monster_name]:
+                screen.blit(monster_images[monster_name], monster_pos)
+            else:
+                monster_rect = pygame.Rect(
+                    monster_pos[0], monster_pos[1], TILE_SIZE, TILE_SIZE)
+                pygame.draw.rect(screen, (255, 0, 0), monster_rect)
 
         # Draw town
         pygame.draw.circle(
@@ -788,9 +806,12 @@ def launch_map(player_pos, town_pos):
         )
 
         # Draw player
-        player_rect = pygame.Rect(
-            player_pos[0] * TILE_SIZE, player_pos[1] * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-        pygame.draw.rect(screen, (0, 0, 255), player_rect)
+        if player_image:
+            screen.blit(player_image, (player_pos[0] * TILE_SIZE, player_pos[1] * TILE_SIZE))
+        else:
+            player_rect = pygame.Rect(
+                player_pos[0] * TILE_SIZE, player_pos[1] * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+            pygame.draw.rect(screen, (0, 0, 255), player_rect)
 
         pygame.display.flip()
         clock.tick(30)
