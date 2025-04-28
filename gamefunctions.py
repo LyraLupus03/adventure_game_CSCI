@@ -697,7 +697,8 @@ def launch_map(player_pos, town_pos):
     try:
         player_image = pygame.transform.scale(
             pygame.image.load('images/player.png'), (32, 32))
-    except Exception:
+    except Exception as e:
+        print(f"Failed to load player image: {e}")
         player_image = None
 
     monster_images = {}
@@ -705,7 +706,8 @@ def launch_map(player_pos, town_pos):
         try:
             monster_images[name] = pygame.transform.scale(
                 pygame.image.load(f'images/{name.lower()}.png'), (32, 32))
-        except Exception:
+        except Exception as e:
+            print(f"Failed to load monster image for {name}: {e}")
             monster_images[name] = None
 
     running = True

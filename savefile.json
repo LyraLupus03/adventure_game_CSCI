@@ -1,0 +1,10 @@
+{
+    "player_name": "jeff",
+    "player_hp": 25,
+    "player_gold": 18.659999999999997,
+    "max_hp": 30,
+    "player_inventory": [],
+    "equipped_weapon": null,
+    "equipped_armor": null,
+    "doctor_visits": 0
+}
