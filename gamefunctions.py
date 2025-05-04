@@ -319,6 +319,34 @@ def combat_loop(player_hp, monster, player_gold, weapon, inventory):
 
     while monster_hp > 0 and player_hp > 0:
         print(f"\nYour HP: {player_hp} | {monster['name']} HP: {monster_hp}")
+        potions = [item for item in inventory if item["type"] == "consumable"]
+        if potions:
+            print("You have potions available:")
+            for i, p in enumerate(potions, 1):
+                print(f"{i}) {p['name'].title()}")
+
+            use = input("Use a potion? (y/n): ").lower()
+            if use == "y":
+                try:
+                    choice = int(input("Choose potion by number: ")) - 1
+                    potion = potions[choice]
+
+                    if potion["effect"] == "heal":
+                        healed = 15
+                        player_hp = min(player_hp + healed, 30)
+                        print(f"You drank a {potion['name']} and restored {healed} HP!")
+                    elif potion["effect"] == "boost":
+                        bonus = 10
+                        print(f"You feel energized! You’ll do +{bonus} damage this turn.")
+                    elif potion["effect"] == "dodge":
+                        print(f"You used {potion['name']} and dodged the enemy attack this round!")
+                        inventory.remove(potion)
+                        continue
+
+                    inventory.remove(potion)
+                except (IndexError, ValueError):
+                    print("Invalid choice.")
+
         print("1) Attack")
         print("2) Run Away")
         choice = input("Enter choice (1-2): ")
@@ -344,7 +372,18 @@ def combat_loop(player_hp, monster, player_gold, weapon, inventory):
         if monster_hp <= 0:
             print(f"You defeated the {monster['name']} and earned {monster_money:.2f} gold!")
             player_gold += monster_money
-            break
+
+            ingredient_drops = {
+                "Vampire": "vial of blood",
+                "Pixie": "bag of pixie dust",
+                "Frog": "jar of warts"
+            }
+
+            drop_name = ingredient_drops.get(monster["name"])
+            if drop_name:
+                loot = {"name": drop_name, "type": "ingredient"}
+                inventory.append(loot)
+                print(f"You found a {drop_name} on the {monster['name']}!")
 
         damage_taken = monster_power
 
@@ -918,6 +957,70 @@ def init_wandering_monsters():
         })
 
     state["monsters"] = monsters
+
+    def visit_crafting_station(inventory):
+        """
+        Allows the player to craft potions using monster ingredients.
+        Returns the updated inventory.
+        """
+        print("\n--- Potion Crafting Station ---")
+
+        # Recipe book: ingredient combinations mapped to potions
+        recipes = {
+            frozenset(["vial of blood", "jar of warts"]): {
+                "name": "healing potion",
+                "type": "consumable",
+                "effect": "heal"
+            },
+            frozenset(["vial of blood", "bag of pixie dust"]): {
+                "name": "energy elixir",
+                "type": "consumable",
+                "effect": "boost"
+            },
+            frozenset(["bag of pixie dust", "jar of warts"]): {
+                "name": "invisibility brew",
+                "type": "consumable",
+                "effect": "dodge"
+            }
+        }
+
+        ingredients = [item["name"] for item in inventory if item["type"] == "ingredient"]
+        if len(ingredients) < 2:
+            print("You don't have enough ingredients to craft any potions.")
+            return inventory
+
+        print("Available ingredients:")
+        for idx, ing in enumerate(ingredients, 1):
+            print(f"{idx}) {ing}")
+
+        print("\nChoose two ingredients to combine (by number):")
+        try:
+            first = int(input("First ingredient: ")) - 1
+            second = int(input("Second ingredient: ")) - 1
+            if first == second:
+                print("You must choose two different ingredients.")
+                return inventory
+
+            chosen = frozenset([ingredients[first], ingredients[second]])
+        except (IndexError, ValueError):
+            print("Invalid selection.")
+            return inventory
+
+        potion = recipes.get(chosen)
+        if not potion:
+            print("That combination doesn't make anything useful.")
+            return inventory
+
+        for name in chosen:
+            for i, item in enumerate(inventory):
+                if item["name"] == name and item["type"] == "ingredient":
+                    del inventory[i]
+                    break
+
+        inventory.append(potion)
+        print(f"You crafted a {potion['name']}!")
+
+        return inventory
 
     with open(MAP_STATE_FILE, 'w') as f:
         json.dump(state, f)

@@ -25,13 +25,14 @@ def main():
         print("2) Sleep (Restore HP for 5 Gold)")
         print("3) Visit Shop")
         print("4) Equip Item")
-        print("5) Quit")
-        print("6) Save and Quit")
+        print("5) Craft Potion")
+        print("6) Quit")
+        print("7) Save and Quit")
 
-        choice = input("Enter choice (1-6): ")
-        while choice not in ["1", "2", "3", "4", "5", "6"]:
-            print("Invalid input. Please choose 1, 2, 3, 4, 5, or 6.")
-            choice = input("Enter choice (1-6): ")
+        choice = input("Enter choice (1-7): ")
+        while choice not in ["1", "2", "3", "4", "5", "6", "7"]:
+            print("Invalid input. Please choose 1, 2, 3, 4, 5, 6, or 7.")
+            choice = input("Enter choice (1-7): ")
 
         if choice == "1":
             player_hp, player_gold, equipped_weapon, doctor_visits = gamefunctions.explore_until_town(
@@ -44,8 +45,10 @@ def main():
             equipped_weapon, equipped_armor = gamefunctions.handle_equipment(
                 player_inventory, equipped_weapon, equipped_armor)
         elif choice == "5":
-            print("Thanks for playing!")
+            player_inventory = gamefunctions.visit_crafting_station(player_inventory)
         elif choice == "6":
+            print("Thanks for playing!")
+        elif choice == "7":
             gamefunctions.save_and_quit("savefile.json", player_name, player_hp,
                 player_gold, max_hp, player_inventory, equipped_weapon, equipped_armor, doctor_visits)
             break
