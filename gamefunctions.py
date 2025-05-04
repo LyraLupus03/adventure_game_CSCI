@@ -957,70 +957,70 @@ def init_wandering_monsters():
         })
 
     state["monsters"] = monsters
-
-    def visit_crafting_station(inventory):
-        """
-        Allows the player to craft potions using monster ingredients.
-        Returns the updated inventory.
-        """
-        print("\n--- Potion Crafting Station ---")
-
-        # Recipe book: ingredient combinations mapped to potions
-        recipes = {
-            frozenset(["vial of blood", "jar of warts"]): {
-                "name": "healing potion",
-                "type": "consumable",
-                "effect": "heal"
-            },
-            frozenset(["vial of blood", "bag of pixie dust"]): {
-                "name": "energy elixir",
-                "type": "consumable",
-                "effect": "boost"
-            },
-            frozenset(["bag of pixie dust", "jar of warts"]): {
-                "name": "invisibility brew",
-                "type": "consumable",
-                "effect": "dodge"
-            }
-        }
-
-        ingredients = [item["name"] for item in inventory if item["type"] == "ingredient"]
-        if len(ingredients) < 2:
-            print("You don't have enough ingredients to craft any potions.")
-            return inventory
-
-        print("Available ingredients:")
-        for idx, ing in enumerate(ingredients, 1):
-            print(f"{idx}) {ing}")
-
-        print("\nChoose two ingredients to combine (by number):")
-        try:
-            first = int(input("First ingredient: ")) - 1
-            second = int(input("Second ingredient: ")) - 1
-            if first == second:
-                print("You must choose two different ingredients.")
-                return inventory
-
-            chosen = frozenset([ingredients[first], ingredients[second]])
-        except (IndexError, ValueError):
-            print("Invalid selection.")
-            return inventory
-
-        potion = recipes.get(chosen)
-        if not potion:
-            print("That combination doesn't make anything useful.")
-            return inventory
-
-        for name in chosen:
-            for i, item in enumerate(inventory):
-                if item["name"] == name and item["type"] == "ingredient":
-                    del inventory[i]
-                    break
-
-        inventory.append(potion)
-        print(f"You crafted a {potion['name']}!")
-
-        return inventory
-
+    
     with open(MAP_STATE_FILE, 'w') as f:
         json.dump(state, f)
+
+def visit_crafting_station(inventory):
+    """
+    Allows the player to craft potions using monster ingredients.
+    Returns the updated inventory.
+    """
+    print("\n--- Potion Crafting Station ---")
+
+    # Recipe book: ingredient combinations mapped to potions
+    recipes = {
+        frozenset(["vial of blood", "jar of warts"]): {
+            "name": "healing potion",
+            "type": "consumable",
+            "effect": "heal"
+        },
+        frozenset(["vial of blood", "bag of pixie dust"]): {
+            "name": "energy elixir",
+            "type": "consumable",
+            "effect": "boost"
+        },
+        frozenset(["bag of pixie dust", "jar of warts"]): {
+            "name": "invisibility brew",
+            "type": "consumable",
+            "effect": "dodge"
+        }
+    }
+
+    ingredients = [item["name"] for item in inventory if item["type"] == "ingredient"]
+    if len(ingredients) < 2:
+        print("You don't have enough ingredients to craft any potions.")
+        return inventory
+
+    print("Available ingredients:")
+    for idx, ing in enumerate(ingredients, 1):
+        print(f"{idx}) {ing}")
+
+    print("\nChoose two ingredients to combine (by number):")
+    try:
+        first = int(input("First ingredient: ")) - 1
+        second = int(input("Second ingredient: ")) - 1
+        if first == second:
+            print("You must choose two different ingredients.")
+            return inventory
+
+        chosen = frozenset([ingredients[first], ingredients[second]])
+    except (IndexError, ValueError):
+        print("Invalid selection.")
+        return inventory
+
+    potion = recipes.get(chosen)
+    if not potion:
+        print("That combination doesn't make anything useful.")
+        return inventory
+
+    for name in chosen:
+        for i, item in enumerate(inventory):
+            if item["name"] == name and item["type"] == "ingredient":
+                del inventory[i]
+                break
+
+    inventory.append(potion)
+    print(f"You crafted a {potion['name']}!")
+
+    return inventory
