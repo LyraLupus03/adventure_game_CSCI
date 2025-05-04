@@ -1,10 +1,25 @@
 {
-    "player_name": "jeff",
-    "player_hp": 25,
-    "player_gold": 18.659999999999997,
+    "player_name": "Haley",
+    "player_hp": 10,
+    "player_gold": -5.199999999999999,
     "max_hp": 30,
-    "player_inventory": [],
+    "player_inventory": [
+        {
+            "name": "bag of pixie dust",
+            "type": "ingredient"
+        },
+        {
+            "name": "jar of warts",
+            "type": "ingredient"
+        }
+    ],
     "equipped_weapon": null,
-    "equipped_armor": null,
-    "doctor_visits": 0
+    "equipped_armor": {
+        "name": "shield",
+        "type": "armor",
+        "maxDurability": 5,
+        "currentDurability": 0,
+        "price": 8
+    },
+    "doctor_visits": 2
 }
